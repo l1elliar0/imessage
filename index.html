@@ -1029,8 +1029,10 @@ function renderAdminPreview(){
     return;
   }
 
+  const previewMode = chat?.mode === "sms" ? "sms" : "imessage";
+
   preview.innerHTML = `
-    <section class="viewer">
+    <section class="viewer" data-mode="${previewMode}">
       <div class="viewer-head">
         <div class="viewer-head-inner">
           <div class="viewer-name">${escapeHTML(chat.name || chat.id)}</div>
@@ -1038,7 +1040,7 @@ function renderAdminPreview(){
         </div>
       </div>
       <div class="messages" style="min-height:180px;max-height:260px">
-        ${renderChatItems(adminMessages)}
+        ${renderChatItems(adminMessages, previewMode)}
       </div>
       <div class="composer">
         <div class="composer-bar">
@@ -1333,9 +1335,17 @@ function bindAdminEvents(){
     });
   });
 
+  const chatModeInput = document.getElementById("chatModeInput");
+
+  chatModeInput?.addEventListener("change",async()=>{
+    await saveChatMeta({
+      mode:chatModeInput.value === "sms" ? "sms" : "imessage"
+    });
+  });
+
   document.getElementById("saveModeBtn")?.addEventListener("click",async()=>{
     await saveChatMeta({
-      mode:document.getElementById("chatModeInput").value === "sms" ? "sms" : "imessage"
+      mode:chatModeInput?.value === "sms" ? "sms" : "imessage"
     });
   });
 
