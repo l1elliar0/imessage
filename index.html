@@ -615,7 +615,7 @@ function renderViewerMessages(items){
   if(!list) return;
 
   if(!items.length){
-    list.innerHTML = `<div class="viewer-empty">아직 저장된 메시지가 없어요.</div>`;
+    list.innerHTML = `<div class="viewer-empty">아직 메시지가 없습니다.</div>`;
     return;
   }
 
@@ -632,7 +632,7 @@ function startViewer(){
   if(!viewerId){
     renderViewerShell("MESSAGE","");
     document.getElementById("viewerMessages").innerHTML =
-      `<div class="viewer-empty">주소 뒤에 <b>?id=대화ID</b>를 붙여주세요. </div>`;
+      `<div class="viewer-empty">주소 뒤에 <b>?id=대화ID</b>를 붙여주세요.</div>`;
     return;
   }
 
@@ -645,7 +645,7 @@ function startViewer(){
         const nameEl = document.getElementById("viewerName");
         if(nameEl) nameEl.textContent = "CHAT NOT FOUND";
         const list = document.getElementById("viewerMessages");
-        if(list) list.innerHTML = `<div class="viewer-empty">등록된 대화가 없습니다.<br>${escapeHTML(viewerId)}</div>`;
+        if(list) list.innerHTML = `<div class="viewer-empty">등록된 대화가 없습니다.</div>`;
         return;
       }
       const data = snap.data();
@@ -655,7 +655,7 @@ function startViewer(){
     error=>{
       console.error(error);
       const list = document.getElementById("viewerMessages");
-      if(list) list.innerHTML = `<div class="viewer-error">대화를 불러오지 못했어요.<br>Firestore Rules를 확인해주세요.</div>`;
+      if(list) list.innerHTML = `<div class="viewer-error">대화를 불러오지 못했어요.</div>`;
     }
   );
 
@@ -749,8 +749,8 @@ function renderAdmin(){
           <div class="copy-note" id="copyNote"></div>
 
           <div class="field-row three" style="margin-top:8px">
-            <input class="field" id="newIdInput" placeholder="새 ID · eden01">
-            <input class="field" id="newNameInput" placeholder="표시 이름 · EDEN">
+            <input class="field" id="newIdInput" placeholder="새 ID · name01">
+            <input class="field" id="newNameInput" placeholder="표시 이름 · NAME">
             <button class="mini-btn primary" id="createChatBtn">새 대화</button>
           </div>
 
@@ -874,7 +874,7 @@ function subscribeChatList(){
     },
     error=>{
       console.error(error);
-      root.innerHTML = `<div class="admin-error">대화 목록을 불러오지 못했어요.<br>Firestore Rules를 먼저 적용해주세요.</div>`;
+      root.innerHTML = `<div class="admin-error">대화 목록을 불러오지 못했어요.</div>`;
     }
   );
 }
