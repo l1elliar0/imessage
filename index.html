@@ -52,6 +52,11 @@ button,input,textarea,select{font:inherit}
   border-radius:22px;
   overflow:hidden;
   box-shadow:0 8px 24px rgba(28,34,43,.035);
+  --chat-accent:#2f95ff;
+}
+
+.viewer[data-mode="sms"]{
+  --chat-accent:#19d34c;
 }
 
 .viewer-head{
@@ -140,7 +145,7 @@ button,input,textarea,select{font:inherit}
 }
 
 .message-row.right .bubble{
-  background:linear-gradient(180deg,#47a5ff 0%,#2f95ff 100%);
+  background:var(--chat-accent);
   color:#fff;
   border-bottom-right-radius:6px;
 }
@@ -157,6 +162,19 @@ button,input,textarea,select{font:inherit}
 
 .message-row.left .message-status{text-align:left}
 .message-row.right .message-status{text-align:right}
+
+.conversation-meta{
+  width:100%;
+  padding:2px 0 6px;
+  text-align:center;
+}
+
+.conversation-channel{
+  color:#8f8f96;
+  font-size:11px;
+  line-height:1.25;
+  font-weight:600;
+}
 
 .date-divider{
   width:100%;
@@ -638,6 +656,8 @@ let selectedSide = "left";
 let editingMessageId = null;
 let editingDateId = null;
 let adminMessages = [];
+let viewerMode = "imessage";
+let lastViewerItems = [];
 
 let unsubChatList = null;
 let unsubAdminMessages = null;
@@ -702,9 +722,13 @@ function viewerUrl(id){
   return `${baseUrl()}?id=${encodeURIComponent(id)}`;
 }
 
+function getChannelLabel(mode="imessage"){
+  return mode === "sms" ? "문자 메시지" : "iMessage";
+}
+
 function renderViewerShell(name="",id=""){
   root.innerHTML = `
-    <section class="viewer">
+    <section class="viewer" data-mode="${viewerMode}">
       <div class="viewer-head">
         <div class="viewer-head-inner">
           <div class="viewer-name" id="viewerName">${escapeHTML(name || "MESSAGE")}</div>
@@ -735,12 +759,23 @@ function renderViewerShell(name="",id=""){
   `;
 }
 
-function renderChatItems(items){
+function renderChatItems(items, mode="imessage"){
+  const label = getChannelLabel(mode);
+
   if(!items.length){
-    return `<div class="viewer-empty">아직 메시지가 없습니다.</div>`;
+    return `
+      <div class="conversation-meta">
+        <div class="conversation-channel">${escapeHTML(label)}</div>
+      </div>
+      <div class="viewer-empty">아직 메시지가 없습니다.</div>
+    `;
   }
 
-  return items.map(item=>{
+  return `
+    <div class="conversation-meta">
+      <div class="conversation-channel">${escapeHTML(label)}</div>
+    </div>
+  ` + items.map(item=>{
     if(item.type === "date"){
       return `<div class="date-divider">${escapeHTML(item.text || "")}</div>`;
     }
@@ -761,12 +796,13 @@ function renderViewerMessages(items){
   const list = document.getElementById("viewerMessages");
   if(!list) return;
 
-  list.innerHTML = renderChatItems(items);
+  list.innerHTML = renderChatItems(items, viewerMode);
   requestAnimationFrame(()=>{ list.scrollTop = list.scrollHeight; });
 }
 
 function startViewer(){
   if(!viewerId){
+    viewerMode = "imessage";
     renderViewerShell("MESSAGE","");
     document.getElementById("viewerMessages").innerHTML =
       `<div class="viewer-empty">주소 뒤에 <b>?id=대화ID</b>를 붙여주세요.</div>`;
@@ -779,6 +815,9 @@ function startViewer(){
     doc(db,"imessage_chats",viewerId),
     snap=>{
       if(!snap.exists()){
+        viewerMode = "imessage";
+        const viewer = document.querySelector(".viewer");
+        if(viewer) viewer.dataset.mode = viewerMode;
         const nameEl = document.getElementById("viewerName");
         if(nameEl) nameEl.textContent = "CHAT NOT FOUND";
         const list = document.getElementById("viewerMessages");
@@ -786,8 +825,12 @@ function startViewer(){
         return;
       }
       const data = snap.data();
+      viewerMode = data.mode === "sms" ? "sms" : "imessage";
+      const viewer = document.querySelector(".viewer");
+      if(viewer) viewer.dataset.mode = viewerMode;
       const nameEl = document.getElementById("viewerName");
       if(nameEl) nameEl.textContent = data.name || viewerId;
+      renderViewerMessages(lastViewerItems);
     },
     error=>{
       console.error(error);
@@ -800,6 +843,7 @@ function startViewer(){
     query(collection(db,"imessage_chats",viewerId,"messages"),orderBy("order","asc")),
     snap=>{
       const items = snap.docs.map(d=>({id:d.id,...d.data()}));
+      lastViewerItems = items;
       renderViewerMessages(items);
     },
     error=>{
@@ -900,9 +944,16 @@ function renderAdmin(){
 
         <div class="section">
           <div class="section-title">현재 대화 정보</div>
-          <div class="field-row">
+          <div class="field-row" style="margin-bottom:7px">
             <input class="field" id="chatNameInput" value="${escapeHTML(chat?.name || "")}" placeholder="표시 이름" ${chat ? "" : "disabled"}>
-            <button class="mini-btn" id="saveNameBtn" ${chat ? "" : "disabled"}>이름 저장</button>
+            <button class="mini-btn" id="saveNameBtn" ${chat ? "" : "disabled"}>저장</button>
+          </div>
+          <div class="field-row">
+            <select class="select" id="chatModeInput" ${chat ? "" : "disabled"}>
+              <option value="imessage" ${(chat?.mode || "imessage")==="imessage" ? "selected" : ""}>iMessage</option>
+              <option value="sms" ${(chat?.mode || "imessage")==="sms" ? "selected" : ""}>문자 메시지</option>
+            </select>
+            <button class="mini-btn" id="saveModeBtn" ${chat ? "" : "disabled"}>타입 저장</button>
           </div>
         </div>
 
@@ -1066,6 +1117,7 @@ async function createChat(id,name){
   try{
     await setDoc(doc(db,"imessage_chats",cleanId),{
       name:String(name || "").trim() || cleanId,
+      mode:"imessage",
       createdAt:serverTimestamp(),
       updatedAt:serverTimestamp()
     },{merge:true});
@@ -1212,6 +1264,7 @@ async function createSample(){
     const batch = writeBatch(db);
     batch.set(doc(db,"imessage_chats",id),{
       name:"SAMPLE",
+      mode:"imessage",
       createdAt:serverTimestamp(),
       updatedAt:serverTimestamp()
     },{merge:true});
@@ -1262,16 +1315,28 @@ function bindAdminEvents(){
   document.getElementById("sampleBtn")?.addEventListener("click",createSample);
   document.getElementById("deleteChatBtn")?.addEventListener("click",deleteCurrentChat);
 
-  document.getElementById("saveNameBtn")?.addEventListener("click",async()=>{
+  async function saveChatMeta(patch={}){
     if(!selectedChatId) return;
     try{
       await updateDoc(doc(db,"imessage_chats",selectedChatId),{
-        name:document.getElementById("chatNameInput").value.trim() || selectedChatId,
+        ...patch,
         updatedAt:serverTimestamp()
       });
     }catch(error){
-      showError(error,"이름을 저장하지 못했어요.");
+      showError(error,"대화 정보를 저장하지 못했어요.");
     }
+  }
+
+  document.getElementById("saveNameBtn")?.addEventListener("click",async()=>{
+    await saveChatMeta({
+      name:document.getElementById("chatNameInput").value.trim() || selectedChatId
+    });
+  });
+
+  document.getElementById("saveModeBtn")?.addEventListener("click",async()=>{
+    await saveChatMeta({
+      mode:document.getElementById("chatModeInput").value === "sms" ? "sms" : "imessage"
+    });
   });
 
   document.getElementById("copyLinkBtn")?.addEventListener("click",async()=>{
