@@ -215,12 +215,46 @@ button,input,textarea,select{font:inherit}
 }
 
 .composer-placeholder{
+  min-width:0;
+  height:100%;
+  display:flex;
+  align-items:center;
   color:#b3b5bb;
   font-size:12px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
   padding:0 2px;
+  cursor:text;
+  user-select:none;
+}
+
+.composer-hint{
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.fake-caret{
+  display:none;
+  width:1.5px;
+  height:17px;
+  margin-left:1px;
+  background:#2f95ff;
+  border-radius:999px;
+  animation:fakeCaretBlink 1s steps(1,end) infinite;
+}
+
+.composer-bar.is-focused .composer-hint{
+  display:none;
+}
+
+.composer-bar.is-focused .fake-caret{
+  display:inline-block;
+}
+
+@keyframes fakeCaretBlink{
+  0%,49%{opacity:1}
+  50%,100%{opacity:0}
 }
 
 .composer-mic{
@@ -625,6 +659,41 @@ function showError(error,fallback="오류가 발생했어요."){
   alert(fallback + code);
 }
 
+function clearFakeComposerFocus(except=null){
+  document.querySelectorAll(".composer-bar.is-focused").forEach(bar=>{
+    if(bar !== except) bar.classList.remove("is-focused");
+  });
+}
+
+document.addEventListener("click",e=>{
+  const placeholder = e.target.closest(".composer-placeholder");
+
+  if(placeholder){
+    const bar = placeholder.closest(".composer-bar");
+    clearFakeComposerFocus(bar);
+    bar?.classList.add("is-focused");
+    placeholder.focus({preventScroll:true});
+    return;
+  }
+
+  clearFakeComposerFocus();
+});
+
+document.addEventListener("focusin",e=>{
+  const placeholder = e.target.closest?.(".composer-placeholder");
+  if(!placeholder) return;
+  const bar = placeholder.closest(".composer-bar");
+  clearFakeComposerFocus(bar);
+  bar?.classList.add("is-focused");
+});
+
+document.addEventListener("keydown",e=>{
+  if(e.key === "Escape"){
+    clearFakeComposerFocus();
+    document.activeElement?.blur?.();
+  }
+});
+
 function baseUrl(){
   return location.origin + location.pathname;
 }
@@ -648,7 +717,10 @@ function renderViewerShell(name="",id=""){
       <div class="composer">
         <div class="composer-bar">
           <button class="composer-plus" type="button" aria-label="add">+</button>
-          <div class="composer-placeholder">문자 메시지 · SMS</div>
+          <div class="composer-placeholder" role="textbox" aria-readonly="true" tabindex="0">
+            <span class="composer-hint">문자 메시지 · SMS</span>
+            <span class="fake-caret" aria-hidden="true"></span>
+          </div>
           <button class="composer-mic" type="button" aria-label="mic">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <rect x="9" y="3" width="6" height="11" rx="3"></rect>
@@ -920,7 +992,10 @@ function renderAdminPreview(){
       <div class="composer">
         <div class="composer-bar">
           <button class="composer-plus" type="button" aria-label="add">+</button>
-          <div class="composer-placeholder">문자 메시지 · SMS</div>
+          <div class="composer-placeholder" role="textbox" aria-readonly="true" tabindex="0">
+            <span class="composer-hint">문자 메시지 · SMS</span>
+            <span class="fake-caret" aria-hidden="true"></span>
+          </div>
           <button class="composer-mic" type="button" aria-label="mic">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <rect x="9" y="3" width="6" height="11" rx="3"></rect>
