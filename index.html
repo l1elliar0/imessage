@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iMessage Widget</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --page:transparent;
+  --panel:#ffffff;
+  --line:#d9dde3;
+  --line-soft:#eceef1;
+  --text:#262b31;
+  --sub:#8b9199;
+  --left:#e9eaee;
+  --right:#2f80ed;
+  --admin-soft:#f7f8fa;
+  --danger:#cc6666;
+}
+
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  padding:0;
+  background:transparent;
+  font-family:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+}
+
+body{
+  padding:6px;
+}
+
+button,input,textarea,select{font:inherit}
+
+.shell{
+  width:min(100%,460px);
+  margin:0 auto;
+}
+
+/* ========== VIEWER ========== */
+.viewer{
+  width:100%;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 8px 24px rgba(28,34,43,.045);
+}
+
+.viewer-head{
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  padding:10px 48px;
+  border-bottom:1px solid var(--line-soft);
+}
+
+.viewer-name{
+  font-size:13px;
+  font-weight:800;
+  line-height:1.1;
+  text-align:center;
+}
+
+.viewer-sub{
+  margin-top:3px;
+  font-size:8px;
+  font-weight:600;
+  letter-spacing:.08em;
+  color:var(--sub);
+  text-align:center;
+}
+
+.viewer-id{
+  position:absolute;
+  right:12px;
+  top:10px;
+  font-size:7px;
+  font-weight:700;
+  letter-spacing:.06em;
+  color:#b1b5bb;
+}
+
+.messages{
+  min-height:230px;
+  max-height:520px;
+  overflow-y:auto;
+  padding:14px 11px 17px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  scrollbar-width:thin;
+  scrollbar-color:#d8dce2 transparent;
+}
+
+.message-row{
+  display:flex;
+  width:100%;
+}
+
+.message-row.left{justify-content:flex-start}
+.message-row.right{justify-content:flex-end}
+
+.bubble{
+  max-width:78%;
+  padding:8px 11px;
+  border-radius:16px;
+  font-size:12.5px;
+  line-height:1.46;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+
+.message-row.left .bubble{
+  background:var(--left);
+  color:#2c3035;
+  border-bottom-left-radius:5px;
+}
+
+.message-row.right .bubble{
+  background:var(--right);
+  color:#fff;
+  border-bottom-right-radius:5px;
+}
+
+.viewer-empty,
+.viewer-error{
+  min-height:230px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:30px;
+  text-align:center;
+  color:#9ca2aa;
+  font-size:11px;
+  line-height:1.7;
+}
+
+.viewer-error{color:#9b6969}
+
+/* ========== ADMIN ========== */
+.admin{
+  width:100%;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:18px;
+  overflow:hidden;
+}
+
+.admin-head{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:50px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--line-soft);
+}
+
+.admin-title{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+}
+
+.admin-status{
+  margin-left:auto;
+  font-size:8px;
+  color:var(--sub);
+}
+
+.mini-btn{
+  height:29px;
+  padding:0 9px;
+  border:1px solid #d8dce2;
+  border-radius:8px;
+  background:#fff;
+  color:#555d65;
+  font-size:9px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.mini-btn:hover{background:#f6f7f8}
+.mini-btn.danger{color:var(--danger)}
+.mini-btn.primary{background:#f0f5fb;color:#456b96;border-color:#d3dfed}
+
+.admin-body{
+  padding:12px;
+  display:grid;
+  gap:11px;
+}
+
+.section{
+  padding:11px;
+  border:1px solid #e2e5e9;
+  border-radius:12px;
+  background:#fff;
+}
+
+.section-title{
+  margin-bottom:8px;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.05em;
+  color:#757c84;
+}
+
+.field-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:7px;
+  align-items:center;
+}
+
+.field-row.three{
+  grid-template-columns:1fr 1fr auto;
+}
+
+.field,
+.select,
+.textarea{
+  width:100%;
+  border:1px solid #d9dde3;
+  border-radius:9px;
+  background:#fff;
+  color:#343940;
+  outline:none;
+}
+
+.field,.select{
+  height:34px;
+  padding:0 9px;
+  font-size:10px;
+}
+
+.textarea{
+  min-height:76px;
+  padding:9px 10px;
+  resize:vertical;
+  font-size:10.5px;
+  line-height:1.5;
+}
+
+.field:focus,.select:focus,.textarea:focus{
+  border-color:#b8c6d6;
+  box-shadow:0 0 0 3px rgba(88,122,160,.08);
+}
+
+.subtext{
+  margin-top:6px;
+  font-size:8.5px;
+  line-height:1.5;
+  color:#989ea6;
+}
+
+.side-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin-bottom:7px;
+}
+
+.side-tab{
+  height:32px;
+  border:1px solid #d9dde3;
+  border-radius:9px;
+  background:#fff;
+  color:#656c74;
+  font-size:9px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.side-tab.active{
+  background:#edf4fd;
+  border-color:#a9c5e8;
+  color:#4675ab;
+}
+
+.compose-actions{
+  display:flex;
+  gap:6px;
+  margin-top:7px;
+}
+.compose-actions .mini-btn{flex:1}
+
+.message-admin-list{
+  display:grid;
+  gap:6px;
+  max-height:290px;
+  overflow-y:auto;
+}
+
+.message-admin-item{
+  display:grid;
+  grid-template-columns:39px minmax(0,1fr) auto;
+  gap:7px;
+  align-items:start;
+  padding:7px;
+  border:1px solid #eceef1;
+  border-radius:9px;
+  background:#fbfbfc;
+}
+
+.side-badge{
+  padding:4px 3px;
+  border-radius:6px;
+  background:#eceff2;
+  color:#747b83;
+  font-size:7.5px;
+  font-weight:800;
+  text-align:center;
+}
+
+.side-badge.right{
+  background:#e7f0fc;
+  color:#4d75a4;
+}
+
+.admin-message-text{
+  min-width:0;
+  padding-top:2px;
+  font-size:9.5px;
+  line-height:1.45;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+
+.item-actions{
+  display:grid;
+  grid-template-columns:repeat(2,26px);
+  gap:3px;
+}
+
+.icon-btn{
+  width:26px;
+  height:24px;
+  padding:0;
+  border:1px solid #e0e3e7;
+  border-radius:6px;
+  background:#fff;
+  color:#666d75;
+  font-size:8px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.icon-btn.danger{color:var(--danger)}
+
+.admin-preview-title{
+  margin:2px 0 6px;
+  font-size:8.5px;
+  font-weight:700;
+  color:#8b9199;
+}
+
+.login-wrap{
+  width:100%;
+  min-height:290px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:18px;
+}
+
+.login-card{
+  width:100%;
+  max-width:330px;
+}
+
+.login-title{
+  margin-bottom:4px;
+  font-size:13px;
+  font-weight:800;
+}
+
+.login-desc{
+  margin-bottom:12px;
+  font-size:9px;
+  color:#91979f;
+  line-height:1.6;
+}
+
+.login-card .field{margin-bottom:7px}
+
+.login-error{
+  min-height:18px;
+  padding-top:5px;
+  font-size:8.5px;
+  color:#b76666;
+}
+
+.loading{
+  min-height:220px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#9ca2aa;
+  font-size:10px;
+}
+
+.admin-error{
+  padding:10px;
+  border:1px solid #ecd3d3;
+  border-radius:9px;
+  background:#fff8f8;
+  color:#9e6363;
+  font-size:9px;
+  line-height:1.5;
+}
+
+.copy-note{
+  display:none;
+  padding:6px 8px;
+  border-radius:7px;
+  background:#f0f5fb;
+  color:#57728f;
+  font-size:8px;
+}
+.copy-note.show{display:block}
+
+@media(max-width:390px){
+  .admin-body{padding:9px}
+  .section{padding:9px}
+  .field-row.three{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<div class="shell" id="app">
+  <div class="loading">LOADING...</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+  writeBatch
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCkpmTu5Tx7N9drc5aZrnyM0gHCN3RJ080",
+  authDomain: "guestbook-81734.firebaseapp.com",
+  projectId: "guestbook-81734",
+  storageBucket: "guestbook-81734.firebasestorage.app",
+  messagingSenderId: "210470075010",
+  appId: "1:210470075010:web:bc59796284806e189d129b"
+};
+
+const ADMIN_UID = "f0PcTyEEhjYI6BSMs1UQnTHc2l92";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+setPersistence(auth,browserLocalPersistence).catch(console.warn);
+
+const params = new URLSearchParams(location.search);
+const adminMode = params.get("admin") === "1";
+const viewerId = (params.get("id") || "").trim();
+
+const root = document.getElementById("app");
+
+let currentUser = null;
+let chatList = [];
+let selectedChatId = "";
+let selectedSide = "left";
+let editingMessageId = null;
+let adminMessages = [];
+
+let unsubChatList = null;
+let unsubAdminMessages = null;
+let unsubViewerChat = null;
+let unsubViewerMessages = null;
+
+function escapeHTML(value=""){
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#39;");
+}
+
+function showError(error,fallback="오류가 발생했어요."){
+  console.error(error);
+  const code = error?.code ? ` (${error.code})` : "";
+  alert(fallback + code);
+}
+
+function baseUrl(){
+  return location.origin + location.pathname;
+}
+
+function viewerUrl(id){
+  return `${baseUrl()}?id=${encodeURIComponent(id)}`;
+}
+
+function renderViewerShell(name="",id=""){
+  root.innerHTML = `
+    <section class="viewer">
+      <div class="viewer-head">
+        <div>
+          <div class="viewer-name" id="viewerName">${escapeHTML(name || "MESSAGE")}</div>
+          <div class="viewer-sub">iMESSAGE</div>
+        </div>
+        <div class="viewer-id">${escapeHTML(id)}</div>
+      </div>
+      <div class="messages" id="viewerMessages">
+        <div class="loading">LOADING...</div>
+      </div>
+    </section>
+  `;
+}
+
+function renderViewerMessages(items){
+  const list = document.getElementById("viewerMessages");
+  if(!list) return;
+
+  if(!items.length){
+    list.innerHTML = `<div class="viewer-empty">아직 저장된 메시지가 없어요.</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(item=>`
+    <div class="message-row ${item.side === "right" ? "right" : "left"}">
+      <div class="bubble">${escapeHTML(item.text || "")}</div>
+    </div>
+  `).join("");
+
+  requestAnimationFrame(()=>{ list.scrollTop = list.scrollHeight; });
+}
+
+function startViewer(){
+  if(!viewerId){
+    renderViewerShell("MESSAGE","");
+    document.getElementById("viewerMessages").innerHTML =
+      `<div class="viewer-empty">주소 뒤에 <b>?id=대화ID</b>를 붙여주세요.<br>예: ?id=eden01</div>`;
+    return;
+  }
+
+  renderViewerShell("LOADING",viewerId);
+
+  unsubViewerChat = onSnapshot(
+    doc(db,"imessage_chats",viewerId),
+    snap=>{
+      if(!snap.exists()){
+        const nameEl = document.getElementById("viewerName");
+        if(nameEl) nameEl.textContent = "CHAT NOT FOUND";
+        const list = document.getElementById("viewerMessages");
+        if(list) list.innerHTML = `<div class="viewer-empty">등록된 대화가 없습니다.<br>${escapeHTML(viewerId)}</div>`;
+        return;
+      }
+      const data = snap.data();
+      const nameEl = document.getElementById("viewerName");
+      if(nameEl) nameEl.textContent = data.name || viewerId;
+    },
+    error=>{
+      console.error(error);
+      const list = document.getElementById("viewerMessages");
+      if(list) list.innerHTML = `<div class="viewer-error">대화를 불러오지 못했어요.<br>Firestore Rules를 확인해주세요.</div>`;
+    }
+  );
+
+  unsubViewerMessages = onSnapshot(
+    query(collection(db,"imessage_chats",viewerId,"messages"),orderBy("order","asc")),
+    snap=>{
+      const items = snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderViewerMessages(items);
+    },
+    error=>{
+      console.error(error);
+      const list = document.getElementById("viewerMessages");
+      if(list) list.innerHTML = `<div class="viewer-error">메시지를 불러오지 못했어요.</div>`;
+    }
+  );
+}
+
+function renderLogin(){
+  root.innerHTML = `
+    <section class="login-wrap">
+      <form class="login-card" id="loginForm">
+        <div class="login-title">iMESSAGE ADMIN</div>
+        <div class="login-desc">
+          기존 Firebase 관리자 계정으로 로그인합니다.<br>
+          로그인 상태는 이 브라우저에 유지됩니다.
+        </div>
+        <input class="field" id="emailInput" type="email" placeholder="email" autocomplete="username" required>
+        <input class="field" id="passwordInput" type="password" placeholder="password" autocomplete="current-password" required>
+        <button class="mini-btn primary" style="width:100%;height:34px" type="submit">로그인</button>
+        <div class="login-error" id="loginError"></div>
+      </form>
+    </section>
+  `;
+
+  document.getElementById("loginForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const errorEl = document.getElementById("loginError");
+    errorEl.textContent = "";
+
+    try{
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        document.getElementById("emailInput").value.trim(),
+        document.getElementById("passwordInput").value
+      );
+
+      if(credential.user.uid !== ADMIN_UID){
+        await signOut(auth);
+        errorEl.textContent = "관리자 계정이 아니에요.";
+      }
+    }catch(error){
+      console.error(error);
+      errorEl.textContent = "로그인 정보를 확인해 주세요.";
+    }
+  });
+}
+
+function chatOptions(){
+  if(!chatList.length){
+    return `<option value="">대화 없음</option>`;
+  }
+  return chatList.map(item=>`
+    <option value="${escapeHTML(item.id)}" ${item.id === selectedChatId ? "selected" : ""}>
+      ${escapeHTML(item.name || item.id)} · ${escapeHTML(item.id)}
+    </option>
+  `).join("");
+}
+
+function selectedChat(){
+  return chatList.find(item=>item.id === selectedChatId) || null;
+}
+
+function renderAdmin(){
+  const chat = selectedChat();
+
+  root.innerHTML = `
+    <section class="admin">
+      <div class="admin-head">
+        <div class="admin-title">iMESSAGE ADMIN</div>
+        <div class="admin-status">${currentUser ? "ADMIN CONNECTED" : "OFFLINE"}</div>
+        <button class="mini-btn" id="logoutBtn">로그아웃</button>
+      </div>
+
+      <div class="admin-body">
+        <div class="section">
+          <div class="section-title">대화 세트</div>
+          <div class="field-row">
+            <select class="select" id="chatSelect">${chatOptions()}</select>
+            <button class="mini-btn" id="copyLinkBtn" ${chat ? "" : "disabled"}>보기 링크 복사</button>
+          </div>
+          <div class="copy-note" id="copyNote"></div>
+
+          <div class="field-row three" style="margin-top:8px">
+            <input class="field" id="newIdInput" placeholder="새 ID · eden01">
+            <input class="field" id="newNameInput" placeholder="표시 이름 · EDEN">
+            <button class="mini-btn primary" id="createChatBtn">새 대화</button>
+          </div>
+
+          <div style="display:flex;gap:6px;margin-top:7px">
+            <button class="mini-btn" id="sampleBtn">샘플 대화 만들기</button>
+            <button class="mini-btn danger" id="deleteChatBtn" ${chat ? "" : "disabled"}>현재 대화 삭제</button>
+          </div>
+          <div class="subtext">노션에는 보기 링크(?id=...)만 임베드하면 됩니다.</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">현재 대화 정보</div>
+          <div class="field-row">
+            <input class="field" id="chatNameInput" value="${escapeHTML(chat?.name || "")}" placeholder="표시 이름" ${chat ? "" : "disabled"}>
+            <button class="mini-btn" id="saveNameBtn" ${chat ? "" : "disabled"}>이름 저장</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">${editingMessageId ? "메시지 수정" : "메시지 추가"}</div>
+          <div class="side-tabs">
+            <button class="side-tab ${selectedSide==="left"?"active":""}" data-side="left">왼쪽</button>
+            <button class="side-tab ${selectedSide==="right"?"active":""}" data-side="right">오른쪽</button>
+          </div>
+          <textarea class="textarea" id="messageInput" placeholder="메시지를 입력하세요" ${chat ? "" : "disabled"}></textarea>
+          <div class="compose-actions">
+            <button class="mini-btn primary" id="saveMessageBtn" ${chat ? "" : "disabled"}>${editingMessageId ? "수정 저장" : "메시지 추가"}</button>
+            <button class="mini-btn" id="cancelEditBtn" style="${editingMessageId ? "" : "display:none"}">수정 취소</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">메시지 목록</div>
+          <div class="message-admin-list">
+            ${adminMessages.length ? adminMessages.map((item,index)=>`
+              <div class="message-admin-item">
+                <div class="side-badge ${item.side==="right"?"right":""}">${item.side==="right"?"RIGHT":"LEFT"}</div>
+                <div class="admin-message-text">${escapeHTML(item.text || "")}</div>
+                <div class="item-actions">
+                  <button class="icon-btn" title="위로" data-move-up="${escapeHTML(item.id)}" ${index===0?"disabled":""}>↑</button>
+                  <button class="icon-btn" title="아래로" data-move-down="${escapeHTML(item.id)}" ${index===adminMessages.length-1?"disabled":""}>↓</button>
+                  <button class="icon-btn" title="수정" data-edit="${escapeHTML(item.id)}">✎</button>
+                  <button class="icon-btn danger" title="삭제" data-delete="${escapeHTML(item.id)}">×</button>
+                </div>
+              </div>
+            `).join("") : `<div class="subtext">아직 메시지가 없습니다.</div>`}
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="admin-preview-title">실제 노션용 위젯 미리보기</div>
+          <div id="adminPreview"></div>
+        </div>
+      </div>
+    </section>
+  `;
+
+  bindAdminEvents();
+  renderAdminPreview();
+}
+
+function renderAdminPreview(){
+  const preview = document.getElementById("adminPreview");
+  if(!preview) return;
+
+  const chat = selectedChat();
+  if(!chat){
+    preview.innerHTML = `<div class="viewer-empty" style="border:1px solid var(--line);border-radius:16px;min-height:160px">대화를 하나 만들어주세요.</div>`;
+    return;
+  }
+
+  preview.innerHTML = `
+    <section class="viewer">
+      <div class="viewer-head">
+        <div>
+          <div class="viewer-name">${escapeHTML(chat.name || chat.id)}</div>
+          <div class="viewer-sub">iMESSAGE</div>
+        </div>
+        <div class="viewer-id">${escapeHTML(chat.id)}</div>
+      </div>
+      <div class="messages" style="min-height:180px;max-height:260px">
+        ${adminMessages.length ? adminMessages.map(item=>`
+          <div class="message-row ${item.side==="right"?"right":"left"}">
+            <div class="bubble">${escapeHTML(item.text || "")}</div>
+          </div>
+        `).join("") : `<div class="viewer-empty" style="min-height:170px">메시지가 없습니다.</div>`}
+      </div>
+    </section>
+  `;
+}
+
+function subscribeChatList(){
+  unsubChatList?.();
+  unsubChatList = onSnapshot(
+    collection(db,"imessage_chats"),
+    snap=>{
+      chatList = snap.docs
+        .map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(a.name || a.id).localeCompare(b.name || b.id,"ko"));
+
+      if(!selectedChatId || !chatList.some(c=>c.id===selectedChatId)){
+        selectedChatId = chatList[0]?.id || "";
+        editingMessageId = null;
+      }
+
+      subscribeAdminMessages();
+      renderAdmin();
+    },
+    error=>{
+      console.error(error);
+      root.innerHTML = `<div class="admin-error">대화 목록을 불러오지 못했어요.<br>Firestore Rules를 먼저 적용해주세요.</div>`;
+    }
+  );
+}
+
+function subscribeAdminMessages(){
+  unsubAdminMessages?.();
+  adminMessages = [];
+
+  if(!selectedChatId){
+    return;
+  }
+
+  unsubAdminMessages = onSnapshot(
+    query(collection(db,"imessage_chats",selectedChatId,"messages"),orderBy("order","asc")),
+    snap=>{
+      adminMessages = snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderAdmin();
+    },
+    error=>{
+      console.error(error);
+      adminMessages = [];
+      renderAdmin();
+    }
+  );
+}
+
+async function createChat(id,name){
+  const cleanId = String(id || "").trim().replace(/[^a-zA-Z0-9_-]/g,"");
+  if(!cleanId){
+    alert("대화 ID를 입력해주세요. 영문/숫자/_/-만 사용할 수 있어요.");
+    return;
+  }
+
+  try{
+    await setDoc(doc(db,"imessage_chats",cleanId),{
+      name:String(name || "").trim() || cleanId,
+      createdAt:serverTimestamp(),
+      updatedAt:serverTimestamp()
+    },{merge:true});
+
+    selectedChatId = cleanId;
+    editingMessageId = null;
+  }catch(error){
+    showError(error,"대화를 만들지 못했어요.");
+  }
+}
+
+async function deleteCurrentChat(){
+  if(!selectedChatId) return;
+  if(!confirm(`"${selectedChatId}" 대화를 정말 삭제할까요?\n메시지도 함께 삭제됩니다.`)) return;
+
+  try{
+    const messageSnap = await getDocs(collection(db,"imessage_chats",selectedChatId,"messages"));
+    const batch = writeBatch(db);
+    messageSnap.forEach(d=>batch.delete(d.ref));
+    batch.delete(doc(db,"imessage_chats",selectedChatId));
+    await batch.commit();
+
+    selectedChatId = "";
+    editingMessageId = null;
+  }catch(error){
+    showError(error,"대화를 삭제하지 못했어요.");
+  }
+}
+
+async function saveMessage(){
+  if(!selectedChatId) return;
+
+  const input = document.getElementById("messageInput");
+  const text = input.value.trim();
+  if(!text){
+    input.focus();
+    return;
+  }
+
+  try{
+    if(editingMessageId){
+      await updateDoc(
+        doc(db,"imessage_chats",selectedChatId,"messages",editingMessageId),
+        {text,side:selectedSide,updatedAt:serverTimestamp()}
+      );
+      editingMessageId = null;
+    }else{
+      const maxOrder = adminMessages.reduce((max,item)=>Math.max(max,Number(item.order)||0),0);
+      await addDoc(collection(db,"imessage_chats",selectedChatId,"messages"),{
+        text,
+        side:selectedSide,
+        order:maxOrder + 1000,
+        createdAt:serverTimestamp(),
+        updatedAt:serverTimestamp()
+      });
+    }
+
+    input.value = "";
+  }catch(error){
+    showError(error,"메시지를 저장하지 못했어요.");
+  }
+}
+
+async function moveMessage(id,direction){
+  const index = adminMessages.findIndex(item=>item.id===id);
+  const swapIndex = index + direction;
+  if(index < 0 || swapIndex < 0 || swapIndex >= adminMessages.length) return;
+
+  const reordered = [...adminMessages];
+  [reordered[index],reordered[swapIndex]] = [reordered[swapIndex],reordered[index]];
+
+  try{
+    const batch = writeBatch(db);
+    reordered.forEach((item,i)=>{
+      batch.update(
+        doc(db,"imessage_chats",selectedChatId,"messages",item.id),
+        {order:(i+1)*1000}
+      );
+    });
+    await batch.commit();
+  }catch(error){
+    showError(error,"순서를 바꾸지 못했어요.");
+  }
+}
+
+async function createSample(){
+  const id = "sample01";
+  try{
+    const batch = writeBatch(db);
+    batch.set(doc(db,"imessage_chats",id),{
+      name:"SAMPLE",
+      createdAt:serverTimestamp(),
+      updatedAt:serverTimestamp()
+    },{merge:true});
+
+    const samples = [
+      {side:"left",text:"뭐해"},
+      {side:"right",text:"왜"},
+      {side:"left",text:"그냥 물어봤어."},
+      {side:"right",text:"나 지금 노션 보고 있어."}
+    ];
+
+    samples.forEach((item,i)=>{
+      const ref = doc(collection(db,"imessage_chats",id,"messages"));
+      batch.set(ref,{
+        ...item,
+        order:(i+1)*1000,
+        createdAt:serverTimestamp(),
+        updatedAt:serverTimestamp()
+      });
+    });
+
+    await batch.commit();
+    selectedChatId = id;
+  }catch(error){
+    showError(error,"샘플 대화를 만들지 못했어요.");
+  }
+}
+
+function bindAdminEvents(){
+  document.getElementById("logoutBtn")?.addEventListener("click",()=>signOut(auth));
+
+  document.getElementById("chatSelect")?.addEventListener("change",e=>{
+    selectedChatId = e.target.value;
+    editingMessageId = null;
+    selectedSide = "left";
+    subscribeAdminMessages();
+    renderAdmin();
+  });
+
+  document.getElementById("createChatBtn")?.addEventListener("click",()=>{
+    createChat(
+      document.getElementById("newIdInput").value,
+      document.getElementById("newNameInput").value
+    );
+  });
+
+  document.getElementById("sampleBtn")?.addEventListener("click",createSample);
+  document.getElementById("deleteChatBtn")?.addEventListener("click",deleteCurrentChat);
+
+  document.getElementById("saveNameBtn")?.addEventListener("click",async()=>{
+    if(!selectedChatId) return;
+    try{
+      await updateDoc(doc(db,"imessage_chats",selectedChatId),{
+        name:document.getElementById("chatNameInput").value.trim() || selectedChatId,
+        updatedAt:serverTimestamp()
+      });
+    }catch(error){
+      showError(error,"이름을 저장하지 못했어요.");
+    }
+  });
+
+  document.getElementById("copyLinkBtn")?.addEventListener("click",async()=>{
+    if(!selectedChatId) return;
+    const url = viewerUrl(selectedChatId);
+    try{
+      await navigator.clipboard.writeText(url);
+      const note = document.getElementById("copyNote");
+      note.textContent = "복사됨 · " + url;
+      note.classList.add("show");
+    }catch{
+      prompt("이 주소를 복사하세요.",url);
+    }
+  });
+
+  document.querySelectorAll("[data-side]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      selectedSide = btn.dataset.side;
+      renderAdmin();
+      if(editingMessageId){
+        const item = adminMessages.find(m=>m.id===editingMessageId);
+        const input = document.getElementById("messageInput");
+        if(input && item) input.value = item.text || "";
+      }
+    });
+  });
+
+  document.getElementById("saveMessageBtn")?.addEventListener("click",saveMessage);
+
+  document.getElementById("cancelEditBtn")?.addEventListener("click",()=>{
+    editingMessageId = null;
+    selectedSide = "left";
+    renderAdmin();
+  });
+
+  document.querySelectorAll("[data-edit]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const item = adminMessages.find(m=>m.id===btn.dataset.edit);
+      if(!item) return;
+
+      editingMessageId = item.id;
+      selectedSide = item.side === "right" ? "right" : "left";
+      renderAdmin();
+
+      const input = document.getElementById("messageInput");
+      if(input){
+        input.value = item.text || "";
+        input.focus();
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-delete]").forEach(btn=>{
+    btn.addEventListener("click",async()=>{
+      if(!confirm("이 메시지를 삭제할까요?")) return;
+      try{
+        await deleteDoc(doc(db,"imessage_chats",selectedChatId,"messages",btn.dataset.delete));
+        if(editingMessageId === btn.dataset.delete) editingMessageId = null;
+      }catch(error){
+        showError(error,"메시지를 삭제하지 못했어요.");
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-move-up]").forEach(btn=>{
+    btn.addEventListener("click",()=>moveMessage(btn.dataset.moveUp,-1));
+  });
+
+  document.querySelectorAll("[data-move-down]").forEach(btn=>{
+    btn.addEventListener("click",()=>moveMessage(btn.dataset.moveDown,1));
+  });
+}
+
+function startAdmin(user){
+  currentUser = user;
+  if(user.uid !== ADMIN_UID){
+    signOut(auth);
+    return;
+  }
+  subscribeChatList();
+}
+
+onAuthStateChanged(auth,user=>{
+  currentUser = user;
+
+  if(!adminMode){
+    startViewer();
+    return;
+  }
+
+  if(user && user.uid === ADMIN_UID){
+    startAdmin(user);
+  }else{
+    unsubChatList?.();
+    unsubAdminMessages?.();
+    renderLogin();
+  }
+});
+</script>
+</body>
+</html>
