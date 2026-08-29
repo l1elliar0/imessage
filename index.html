@@ -145,7 +145,7 @@ button,input,textarea,select{font:inherit}
   line-height:1.7;
 }
 
-.viewer-error{color:#9b6969}
+.viewer-error{color:#9ca2aa}
 
 /* ========== ADMIN ========== */
 .admin{
@@ -567,7 +567,7 @@ function startViewer(){
   if(!viewerId){
     renderViewerShell("MESSAGE","");
     document.getElementById("viewerMessages").innerHTML =
-      `<div class="viewer-empty">주소 뒤에 <b>?id=대화ID</b>를 붙여주세요.<br>예: ?id=eden01</div>`;
+      `<div class="viewer-empty">주소 뒤에 <b>?id=대화ID</b>를 붙여주세요.</div>`;
     return;
   }
 
@@ -590,7 +590,7 @@ function startViewer(){
     error=>{
       console.error(error);
       const list = document.getElementById("viewerMessages");
-      if(list) list.innerHTML = `<div class="viewer-error">대화를 불러오지 못했어요.<br>Firestore Rules를 확인해주세요.</div>`;
+      if(list) list.innerHTML = `<div class="viewer-error">대화를 불러오지 못했어요.</div>`;
     }
   );
 
