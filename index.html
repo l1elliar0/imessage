@@ -55,20 +55,28 @@ button,input,textarea,select{font:inherit}
 }
 
 .viewer-head{
-  min-height:68px;
+  min-height:62px;
+  position:relative;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:13px 18px 12px;
+  padding:12px 18px;
   border-bottom:1px solid var(--line);
   background:#fff;
 }
 
 .viewer-head-inner{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   text-align:center;
 }
 
 .viewer-name{
+  width:100%;
+  margin:0 auto;
+  text-align:center;
   font-size:15px;
   font-weight:800;
   line-height:1.1;
@@ -105,8 +113,17 @@ button,input,textarea,select{font:inherit}
 .message-row.left{justify-content:flex-start}
 .message-row.right{justify-content:flex-end}
 
-.bubble{
+.message-stack{
   max-width:78%;
+  display:flex;
+  flex-direction:column;
+}
+
+.message-row.left .message-stack{align-items:flex-start}
+.message-row.right .message-stack{align-items:flex-end}
+
+.bubble{
+  max-width:100%;
   padding:9px 12px 10px;
   border-radius:18px;
   font-size:13px;
@@ -126,6 +143,29 @@ button,input,textarea,select{font:inherit}
   background:linear-gradient(180deg,#47a5ff 0%,#2f95ff 100%);
   color:#fff;
   border-bottom-right-radius:6px;
+}
+
+.message-status{
+  margin-top:3px;
+  padding:0 3px;
+  color:#8f8f96;
+  font-size:9px;
+  line-height:1.25;
+  font-weight:500;
+  white-space:nowrap;
+}
+
+.message-row.left .message-status{text-align:left}
+.message-row.right .message-status{text-align:right}
+
+.date-divider{
+  width:100%;
+  padding:8px 0 6px;
+  color:#8f8f96;
+  text-align:center;
+  font-size:10px;
+  line-height:1.35;
+  font-weight:500;
 }
 
 .viewer-empty,
@@ -377,6 +417,18 @@ button,input,textarea,select{font:inherit}
   color:#4d75a4;
 }
 
+.side-badge.date{
+  background:#f2f0f6;
+  color:#777184;
+}
+
+.admin-message-status{
+  margin-top:3px;
+  color:#999fa7;
+  font-size:8px;
+  line-height:1.35;
+}
+
 .admin-message-text{
   min-width:0;
   padding-top:2px;
@@ -550,6 +602,7 @@ let chatList = [];
 let selectedChatId = "";
 let selectedSide = "left";
 let editingMessageId = null;
+let editingDateId = null;
 let adminMessages = [];
 
 let unsubChatList = null;
@@ -586,7 +639,7 @@ function renderViewerShell(name="",id=""){
       <div class="viewer-head">
         <div class="viewer-head-inner">
           <div class="viewer-name" id="viewerName">${escapeHTML(name || "MESSAGE")}</div>
-          <div class="viewer-sub">iMESSAGE</div>
+          
         </div>
       </div>
       <div class="messages" id="viewerMessages">
@@ -610,21 +663,33 @@ function renderViewerShell(name="",id=""){
   `;
 }
 
+function renderChatItems(items){
+  if(!items.length){
+    return `<div class="viewer-empty">아직 메시지가 없습니다.</div>`;
+  }
+
+  return items.map(item=>{
+    if(item.type === "date"){
+      return `<div class="date-divider">${escapeHTML(item.text || "")}</div>`;
+    }
+
+    const side = item.side === "right" ? "right" : "left";
+    return `
+      <div class="message-row ${side}">
+        <div class="message-stack">
+          <div class="bubble">${escapeHTML(item.text || "")}</div>
+          ${item.status ? `<div class="message-status">${escapeHTML(item.status)}</div>` : ""}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
 function renderViewerMessages(items){
   const list = document.getElementById("viewerMessages");
   if(!list) return;
 
-  if(!items.length){
-    list.innerHTML = `<div class="viewer-empty">아직 메시지가 없습니다.</div>`;
-    return;
-  }
-
-  list.innerHTML = items.map(item=>`
-    <div class="message-row ${item.side === "right" ? "right" : "left"}">
-      <div class="bubble">${escapeHTML(item.text || "")}</div>
-    </div>
-  `).join("");
-
+  list.innerHTML = renderChatItems(items);
   requestAnimationFrame(()=>{ list.scrollTop = list.scrollHeight; });
 }
 
@@ -776,6 +841,8 @@ function renderAdmin(){
             <button class="side-tab ${selectedSide==="right"?"active":""}" data-side="right">오른쪽</button>
           </div>
           <textarea class="textarea" id="messageInput" placeholder="메시지를 입력하세요" ${chat ? "" : "disabled"}></textarea>
+          <input class="field" id="statusInput" style="margin-top:7px" placeholder="말풍선 아래 상태 · 예) 전송됨 / 읽음: 오후 10:29" ${chat ? "" : "disabled"}>
+          <div class="subtext">비워두면 아무것도 표시되지 않습니다. 선택한 말풍선 바로 아래에 붙습니다.</div>
           <div class="compose-actions">
             <button class="mini-btn primary" id="saveMessageBtn" ${chat ? "" : "disabled"}>${editingMessageId ? "수정 저장" : "메시지 추가"}</button>
             <button class="mini-btn" id="cancelEditBtn" style="${editingMessageId ? "" : "display:none"}">수정 취소</button>
@@ -783,16 +850,33 @@ function renderAdmin(){
         </div>
 
         <div class="section">
+          <div class="section-title">${editingDateId ? "날짜 / 시간 수정" : "날짜 / 시간 추가"}</div>
+          <div class="field-row">
+            <input class="field" id="dateDividerInput" placeholder="예) (오늘) 오후 7:23" ${chat ? "" : "disabled"}>
+            <button class="mini-btn primary" id="saveDateBtn" ${chat ? "" : "disabled"}>${editingDateId ? "수정 저장" : "추가"}</button>
+          </div>
+          <div class="compose-actions" style="${editingDateId ? "" : "display:none"}">
+            <button class="mini-btn" id="cancelDateEditBtn">수정 취소</button>
+          </div>
+          <div class="subtext">메시지 목록의 맨 아래에 추가된 뒤 ↑ ↓ 버튼으로 원하는 위치에 옮길 수 있습니다.</div>
+        </div>
+
+        <div class="section">
           <div class="section-title">메시지 목록</div>
           <div class="message-admin-list">
             ${adminMessages.length ? adminMessages.map((item,index)=>`
               <div class="message-admin-item">
-                <div class="side-badge ${item.side==="right"?"right":""}">${item.side==="right"?"RIGHT":"LEFT"}</div>
-                <div class="admin-message-text">${escapeHTML(item.text || "")}</div>
+                <div class="side-badge ${item.type==="date" ? "date" : (item.side==="right"?"right":"")}">${item.type==="date" ? "DATE" : (item.side==="right"?"RIGHT":"LEFT")}</div>
+                <div>
+                  <div class="admin-message-text">${escapeHTML(item.text || "")}</div>
+                  ${item.type!=="date" && item.status ? `<div class="admin-message-status">${escapeHTML(item.status)}</div>` : ""}
+                </div>
                 <div class="item-actions">
                   <button class="icon-btn" title="위로" data-move-up="${escapeHTML(item.id)}" ${index===0?"disabled":""}>↑</button>
                   <button class="icon-btn" title="아래로" data-move-down="${escapeHTML(item.id)}" ${index===adminMessages.length-1?"disabled":""}>↓</button>
-                  <button class="icon-btn" title="수정" data-edit="${escapeHTML(item.id)}">✎</button>
+                  ${item.type==="date"
+                    ? `<button class="icon-btn" title="수정" data-edit-date="${escapeHTML(item.id)}">✎</button>`
+                    : `<button class="icon-btn" title="수정" data-edit="${escapeHTML(item.id)}">✎</button>`}
                   <button class="icon-btn danger" title="삭제" data-delete="${escapeHTML(item.id)}">×</button>
                 </div>
               </div>
@@ -827,15 +911,11 @@ function renderAdminPreview(){
       <div class="viewer-head">
         <div class="viewer-head-inner">
           <div class="viewer-name">${escapeHTML(chat.name || chat.id)}</div>
-          <div class="viewer-sub">iMESSAGE</div>
+          
         </div>
       </div>
       <div class="messages" style="min-height:180px;max-height:260px">
-        ${adminMessages.length ? adminMessages.map(item=>`
-          <div class="message-row ${item.side==="right"?"right":"left"}">
-            <div class="bubble">${escapeHTML(item.text || "")}</div>
-          </div>
-        `).join("") : `<div class="viewer-empty" style="min-height:170px">메시지가 없습니다.</div>`}
+        ${renderChatItems(adminMessages)}
       </div>
       <div class="composer">
         <div class="composer-bar">
@@ -950,6 +1030,7 @@ async function deleteCurrentChat(){
 
     selectedChatId = "";
     editingMessageId = null;
+    editingDateId = null;
   }catch(error){
     showError(error,"대화를 삭제하지 못했어요.");
   }
@@ -959,7 +1040,9 @@ async function saveMessage(){
   if(!selectedChatId) return;
 
   const input = document.getElementById("messageInput");
+  const statusInput = document.getElementById("statusInput");
   const text = input.value.trim();
+  const status = statusInput?.value.trim() || "";
   if(!text){
     input.focus();
     return;
@@ -969,14 +1052,16 @@ async function saveMessage(){
     if(editingMessageId){
       await updateDoc(
         doc(db,"imessage_chats",selectedChatId,"messages",editingMessageId),
-        {text,side:selectedSide,updatedAt:serverTimestamp()}
+        {type:"message",text,side:selectedSide,status,updatedAt:serverTimestamp()}
       );
       editingMessageId = null;
     }else{
       const maxOrder = adminMessages.reduce((max,item)=>Math.max(max,Number(item.order)||0),0);
       await addDoc(collection(db,"imessage_chats",selectedChatId,"messages"),{
+        type:"message",
         text,
         side:selectedSide,
+        status,
         order:maxOrder + 1000,
         createdAt:serverTimestamp(),
         updatedAt:serverTimestamp()
@@ -984,8 +1069,43 @@ async function saveMessage(){
     }
 
     input.value = "";
+    if(statusInput) statusInput.value = "";
   }catch(error){
     showError(error,"메시지를 저장하지 못했어요.");
+  }
+}
+
+async function saveDateDivider(){
+  if(!selectedChatId) return;
+
+  const input = document.getElementById("dateDividerInput");
+  const text = input?.value.trim() || "";
+  if(!text){
+    input?.focus();
+    return;
+  }
+
+  try{
+    if(editingDateId){
+      await updateDoc(
+        doc(db,"imessage_chats",selectedChatId,"messages",editingDateId),
+        {type:"date",text,updatedAt:serverTimestamp()}
+      );
+      editingDateId = null;
+    }else{
+      const maxOrder = adminMessages.reduce((max,item)=>Math.max(max,Number(item.order)||0),0);
+      await addDoc(collection(db,"imessage_chats",selectedChatId,"messages"),{
+        type:"date",
+        text,
+        order:maxOrder + 1000,
+        createdAt:serverTimestamp(),
+        updatedAt:serverTimestamp()
+      });
+    }
+
+    if(input) input.value = "";
+  }catch(error){
+    showError(error,"날짜/시간을 저장하지 못했어요.");
   }
 }
 
@@ -1022,10 +1142,10 @@ async function createSample(){
     },{merge:true});
 
     const samples = [
-      {side:"left",text:"뭐해"},
-      {side:"right",text:"왜"},
-      {side:"left",text:"그냥 물어봤어."},
-      {side:"right",text:"나 지금 노션 보고 있어."}
+      {type:"message",side:"left",text:"뭐해",status:""},
+      {type:"message",side:"right",text:"왜",status:""},
+      {type:"message",side:"left",text:"그냥 물어봤어.",status:""},
+      {type:"message",side:"right",text:"나 지금 노션 보고 있어.",status:"전송됨"}
     ];
 
     samples.forEach((item,i)=>{
@@ -1051,6 +1171,7 @@ function bindAdminEvents(){
   document.getElementById("chatSelect")?.addEventListener("change",e=>{
     selectedChatId = e.target.value;
     editingMessageId = null;
+    editingDateId = null;
     selectedSide = "left";
     subscribeAdminMessages();
     renderAdmin();
@@ -1093,21 +1214,29 @@ function bindAdminEvents(){
 
   document.querySelectorAll("[data-side]").forEach(btn=>{
     btn.addEventListener("click",()=>{
+      const draftText = document.getElementById("messageInput")?.value || "";
+      const draftStatus = document.getElementById("statusInput")?.value || "";
       selectedSide = btn.dataset.side;
       renderAdmin();
-      if(editingMessageId){
-        const item = adminMessages.find(m=>m.id===editingMessageId);
-        const input = document.getElementById("messageInput");
-        if(input && item) input.value = item.text || "";
-      }
+
+      const input = document.getElementById("messageInput");
+      const statusInput = document.getElementById("statusInput");
+      if(input) input.value = draftText;
+      if(statusInput) statusInput.value = draftStatus;
     });
   });
 
   document.getElementById("saveMessageBtn")?.addEventListener("click",saveMessage);
+  document.getElementById("saveDateBtn")?.addEventListener("click",saveDateDivider);
 
   document.getElementById("cancelEditBtn")?.addEventListener("click",()=>{
     editingMessageId = null;
     selectedSide = "left";
+    renderAdmin();
+  });
+
+  document.getElementById("cancelDateEditBtn")?.addEventListener("click",()=>{
+    editingDateId = null;
     renderAdmin();
   });
 
@@ -1121,6 +1250,24 @@ function bindAdminEvents(){
       renderAdmin();
 
       const input = document.getElementById("messageInput");
+      const statusInput = document.getElementById("statusInput");
+      if(input){
+        input.value = item.text || "";
+        input.focus();
+      }
+      if(statusInput) statusInput.value = item.status || "";
+    });
+  });
+
+  document.querySelectorAll("[data-edit-date]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const item = adminMessages.find(m=>m.id===btn.dataset.editDate);
+      if(!item) return;
+
+      editingDateId = item.id;
+      renderAdmin();
+
+      const input = document.getElementById("dateDividerInput");
       if(input){
         input.value = item.text || "";
         input.focus();
@@ -1148,6 +1295,7 @@ function bindAdminEvents(){
       try{
         await deleteDoc(doc(db,"imessage_chats",selectedChatId,"messages",btn.dataset.delete));
         if(editingMessageId === btn.dataset.delete) editingMessageId = null;
+        if(editingDateId === btn.dataset.delete) editingDateId = null;
       }catch(error){
         showError(error,"메시지를 삭제하지 못했어요.");
       }
