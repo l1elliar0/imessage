@@ -13,12 +13,12 @@
 :root{
   --page:transparent;
   --panel:#ffffff;
-  --line:#d9dde3;
-  --line-soft:#eceef1;
-  --text:#262b31;
-  --sub:#8b9199;
-  --left:#e9eaee;
-  --right:#2f80ed;
+  --line:#e7e7eb;
+  --line-soft:#f0f0f3;
+  --text:#1f1f22;
+  --sub:#8f8f96;
+  --left:#e9e9ed;
+  --right:#2f95ff;
   --admin-soft:#f7f8fa;
   --danger:#cc6666;
 }
@@ -49,55 +49,50 @@ button,input,textarea,select{font:inherit}
   width:100%;
   background:var(--panel);
   border:1px solid var(--line);
-  border-radius:20px;
+  border-radius:22px;
   overflow:hidden;
-  box-shadow:0 8px 24px rgba(28,34,43,.045);
+  box-shadow:0 8px 24px rgba(28,34,43,.035);
 }
 
 .viewer-head{
-  min-height:58px;
+  min-height:68px;
   display:flex;
   align-items:center;
   justify-content:center;
-  position:relative;
-  padding:10px 48px;
-  border-bottom:1px solid var(--line-soft);
+  padding:13px 18px 12px;
+  border-bottom:1px solid var(--line);
+  background:#fff;
+}
+
+.viewer-head-inner{
+  text-align:center;
 }
 
 .viewer-name{
-  font-size:13px;
+  font-size:15px;
   font-weight:800;
   line-height:1.1;
-  text-align:center;
+  letter-spacing:-0.01em;
 }
 
 .viewer-sub{
-  margin-top:3px;
-  font-size:8px;
+  margin-top:4px;
+  font-size:9px;
   font-weight:600;
   letter-spacing:.08em;
   color:var(--sub);
-  text-align:center;
-}
-
-.viewer-id{
-  position:absolute;
-  right:12px;
-  top:10px;
-  font-size:7px;
-  font-weight:700;
-  letter-spacing:.06em;
-  color:#b1b5bb;
+  text-transform:uppercase;
 }
 
 .messages{
-  min-height:230px;
-  max-height:520px;
+  min-height:250px;
+  max-height:470px;
   overflow-y:auto;
-  padding:14px 11px 17px;
+  padding:14px 14px 10px;
   display:flex;
   flex-direction:column;
-  gap:5px;
+  gap:6px;
+  background:#fff;
   scrollbar-width:thin;
   scrollbar-color:#d8dce2 transparent;
 }
@@ -112,29 +107,30 @@ button,input,textarea,select{font:inherit}
 
 .bubble{
   max-width:78%;
-  padding:8px 11px;
-  border-radius:16px;
-  font-size:12.5px;
-  line-height:1.46;
+  padding:9px 12px 10px;
+  border-radius:18px;
+  font-size:13px;
+  line-height:1.42;
   white-space:pre-wrap;
   word-break:break-word;
+  box-shadow:0 1px 0 rgba(255,255,255,.25) inset;
 }
 
 .message-row.left .bubble{
   background:var(--left);
-  color:#2c3035;
-  border-bottom-left-radius:5px;
+  color:#222428;
+  border-bottom-left-radius:6px;
 }
 
 .message-row.right .bubble{
-  background:var(--right);
+  background:linear-gradient(180deg,#47a5ff 0%,#2f95ff 100%);
   color:#fff;
-  border-bottom-right-radius:5px;
+  border-bottom-right-radius:6px;
 }
 
 .viewer-empty,
 .viewer-error{
-  min-height:230px;
+  min-height:250px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -145,13 +141,68 @@ button,input,textarea,select{font:inherit}
   line-height:1.7;
 }
 
-.viewer-error{color:#9b6969}
+.composer{
+  padding:10px 10px 12px;
+  border-top:1px solid var(--line-soft);
+  background:#fff;
+}
+
+.composer-bar{
+  height:39px;
+  border:1px solid #ececef;
+  border-radius:999px;
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) 36px;
+  align-items:center;
+  background:#fff;
+  box-shadow:0 1px 0 rgba(0,0,0,.015);
+}
+
+.composer-plus,
+.composer-mic{
+  width:28px;
+  height:28px;
+  border:none;
+  background:transparent;
+  color:#8b8f97;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0 auto;
+  font-size:18px;
+  line-height:1;
+  font-weight:500;
+}
+
+.composer-placeholder{
+  color:#b3b5bb;
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  padding:0 2px;
+}
+
+.composer-mic{
+  font-size:0;
+}
+
+.composer-mic svg{
+  width:15px;
+  height:15px;
+  display:block;
+  stroke:#9aa0a8;
+  stroke-width:1.7;
+  fill:none;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
 
 /* ========== ADMIN ========== */
 .admin{
   width:100%;
   background:#fff;
-  border:1px solid var(--line);
+  border:1px solid #d9dde3;
   border-radius:18px;
   overflow:hidden;
 }
@@ -162,7 +213,7 @@ button,input,textarea,select{font:inherit}
   gap:8px;
   min-height:50px;
   padding:10px 12px;
-  border-bottom:1px solid var(--line-soft);
+  border-bottom:1px solid #eceef1;
 }
 
 .admin-title{
@@ -174,7 +225,7 @@ button,input,textarea,select{font:inherit}
 .admin-status{
   margin-left:auto;
   font-size:8px;
-  color:var(--sub);
+  color:#8b9199;
 }
 
 .mini-btn{
@@ -371,7 +422,7 @@ button,input,textarea,select{font:inherit}
   justify-content:center;
   padding:18px;
   background:#fff;
-  border:1px solid var(--line);
+  border:1px solid #d9dde3;
   border-radius:18px;
 }
 
@@ -435,6 +486,7 @@ button,input,textarea,select{font:inherit}
   .admin-body{padding:9px}
   .section{padding:9px}
   .field-row.three{grid-template-columns:1fr}
+  .messages{min-height:225px}
 }
 </style>
 </head>
@@ -532,14 +584,27 @@ function renderViewerShell(name="",id=""){
   root.innerHTML = `
     <section class="viewer">
       <div class="viewer-head">
-        <div>
+        <div class="viewer-head-inner">
           <div class="viewer-name" id="viewerName">${escapeHTML(name || "MESSAGE")}</div>
           <div class="viewer-sub">iMESSAGE</div>
         </div>
-        <div class="viewer-id">${escapeHTML(id)}</div>
       </div>
       <div class="messages" id="viewerMessages">
         <div class="loading">LOADING...</div>
+      </div>
+      <div class="composer">
+        <div class="composer-bar">
+          <button class="composer-plus" type="button" aria-label="add">+</button>
+          <div class="composer-placeholder">문자 메시지 · SMS</div>
+          <button class="composer-mic" type="button" aria-label="mic">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+              <path d="M6.5 11.5a5.5 5.5 0 0 0 11 0"></path>
+              <path d="M12 17v4"></path>
+              <path d="M9.5 21h5"></path>
+            </svg>
+          </button>
+        </div>
       </div>
     </section>
   `;
@@ -760,11 +825,10 @@ function renderAdminPreview(){
   preview.innerHTML = `
     <section class="viewer">
       <div class="viewer-head">
-        <div>
+        <div class="viewer-head-inner">
           <div class="viewer-name">${escapeHTML(chat.name || chat.id)}</div>
           <div class="viewer-sub">iMESSAGE</div>
         </div>
-        <div class="viewer-id">${escapeHTML(chat.id)}</div>
       </div>
       <div class="messages" style="min-height:180px;max-height:260px">
         ${adminMessages.length ? adminMessages.map(item=>`
@@ -772,6 +836,20 @@ function renderAdminPreview(){
             <div class="bubble">${escapeHTML(item.text || "")}</div>
           </div>
         `).join("") : `<div class="viewer-empty" style="min-height:170px">메시지가 없습니다.</div>`}
+      </div>
+      <div class="composer">
+        <div class="composer-bar">
+          <button class="composer-plus" type="button" aria-label="add">+</button>
+          <div class="composer-placeholder">문자 메시지 · SMS</div>
+          <button class="composer-mic" type="button" aria-label="mic">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+              <path d="M6.5 11.5a5.5 5.5 0 0 0 11 0"></path>
+              <path d="M12 17v4"></path>
+              <path d="M9.5 21h5"></path>
+            </svg>
+          </button>
+        </div>
       </div>
     </section>
   `;
